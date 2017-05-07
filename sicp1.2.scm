@@ -104,13 +104,24 @@
 
 ;Exercise 1.16: Iterative exponent algo
 ; in O(log n) time
-;Skipping for now.  Want to come back to this later
-;(define (iter-x^n x n)
-;  (define (even s) (= (remainder s 2) 0))
-;  (define (iter-loop a ni)
-;    (if (= ni 1)
-;        (* a x)
-;        )))
+(define (fast-exp b n)
+ (define (even x) (= (remainder x 2) 2))
+ (define (halve x) (truncate (/ x 2)))
+ (define (square x) (* x x))
+
+  ;If unclear, the parameters mutate as follows:
+  ; next(a) = a if nn is even, otherwise a * bb
+  ; next(bb) = square(bb)
+  ; next(nn) = half(nn).  Note that the halve function truncates.
+  (define (b^n-it a bb nn)
+    (cond ((= bb 0) 0)    ;This and (= nn 0) could be moved to the outer function.
+          ((= nn 0 ) 1)
+          ((= nn 1 ) (* a bb))
+          ((even nn)
+           (b^n-it a (* bb bb) (halve nn)))
+          (else
+           (b^n-it (* a bb) (* bb bb) (halve nn)))))
+  (b^n-it 1 b n))
 
 ;Ex 1.17 O(log n) time multiplication with only add, double, and half
 ;Very similar to the given exp algo:
@@ -119,15 +130,28 @@
 ;  Special cases for b1 == 1, and when either is 0
 (define (fast-* a b)
   (define (even x) (= (remainder x 2) 0))
-  (define (double x)
-    (+ x x))
-  (define (halve x)
-    (/ x 2))
+  (define (double x) (+ x x))
+  (define (halve x) (truncate (/ x 2)))
 
   (define (fast-*rec a1 b1)
     (cond ((= b1 1) a1)
           ((or (= a1 0) (= b1 0)) 0)
-          ((even b1) (double (fast-*rec a1 (halve b1))))
-          (else (+ a1 (fast-*rec a1 (- b1 1))))))
+          ((even b1)
+           (double (fast-*rec a1 (halve b1))))
+          (else
+           (+ a1 (fast-*rec a1 (- b1 1))))))
 
-  (fast-*rec a b))
+  ;Similar to fast-exp, parameters advance as:
+  ; next(n) = n if b1 is even, n+a1 otherwise
+  ; next(a1) = double(a1)
+  ; next(b1) = halve(b1), where halve is truncated to integer
+  (define (fast-*-it n a1 b1)
+    (cond ((= b1 1) (+ n a1))
+          ((or (= a1 0) (= b1 0)) 0)
+          ((even b1)
+           (fast-*-it n (double a1) (halve b1)))
+          (else
+           (fast-*-it (+ n a1) (double a1)  (halve b1)))))
+
+ ;We could further optimize by always using the greater value as a1
+ (fast-*-it 0 a b))
