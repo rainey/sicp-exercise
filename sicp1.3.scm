@@ -251,7 +251,8 @@
   (define (cont-f-it i res)
     (if (= i 1)
         res
-        (cont-f-it (- i 1) ( / (n (- i 1)) (+ (d (- i 1)) res)))))
+        (cont-f-it (- i 1) ( / (n (- i 1))
+                               (+ (d (- i 1)) res)))))
   (cont-f-it k (/ (n k) (d k))))
 
 (define (find-phi-it k)
@@ -266,3 +267,10 @@
                       (* 2 (/ (+ x 1) 3))
                       1))
                 k))
+
+
+(define (tan-cf x k)
+  (exact->inexact
+   (cont-frac-it (lambda (k) (if (= k 1) x (* x x -1)))
+                 (lambda (k) (+ 1 (* 2 (- k 1))))
+                 k)))
