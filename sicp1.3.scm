@@ -128,3 +128,141 @@
 
 (define (raprod term a b next)
   (r-accumulate * 1 term a b next))
+
+(define (even? val)
+  (= (remainder val 2) 0))
+
+;Ex. 1.33: Filtered accumulator
+(define (filter-accumulate combiner nullval term a b next pred)
+  (define (iter a res)
+    (if (> a b)
+        res
+        (iter (next a)
+              (if (pred (term a))
+                  (combiner res (term a))
+                  res))))
+  
+  (iter a nullval))
+
+
+;Section 1.3.2
+(define (test-let x)
+  (let ((x 3)
+        (y (+ x 2))) ; x on this line uses the 'test-let' x binding
+    (* x y))) ;x on this line is bound to the 'let' x, 
+
+
+(define (search-root f neg-point pos-point)
+  (define (average a b)
+    (/ (+ a b) 2.0))
+  (let ((midpoint (average neg-point pos-point)))
+    (if (close-enough? neg-point pos-point)
+        midpoint
+        (let ((test-value (f midpoint)))
+          (cond
+            ((positive? test-value)
+             (search-root f neg-point midpoint))
+            ((negative? test-value)
+             (search-root f midpoint pos-point))
+            (else midpoint))))))
+
+(define (close-enough? x y)
+  (< (abs (- x y)) 0.00001))
+
+(define (half-interval-method f a b)
+  (let ((a-value (f a))
+        (b-value (f b)))
+    (cond ((and (negative? a-value)
+                (positive? b-value))
+           (search-root f a b))
+          ((and (negative? b-value)
+                (positive? a-value))
+           (search-root f b a))
+          (else
+           (display "Values not of opposite sign" a b))))) ;No error function defined
+
+
+(define tolerance .00000001)
+
+(define (fixed-point f first-guess)
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2))
+       tolerance))
+  (define (try guess)
+    (let ((next (f guess)))
+      (if (close-enough? guess next)
+          next
+          (try next))))
+  (try first-guess))
+
+(define (sqrt-fp x)
+  (define (average a b)
+    (/ (+ a b) 2.0))
+  (fixed-point (lambda (y)
+                 (average y (/ x y))) 1.0))
+
+;Ex. 1.35
+(define (phi)
+  (fixed-pointD (lambda (x) (+ 1 (/ 1 x))) 1.0))
+
+;1.36
+(define (fixed-pointD f first-guess)
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2))
+       tolerance))
+  (define (try guess)
+    (display guess)
+    (newline)
+    (let ((next (f guess)))
+      (if (close-enough? guess next)
+          next
+          (try next))))
+  (try first-guess))
+
+(define (ex1-36)
+    (define (average a b)
+    (/ (+ a b) 2.0))
+  (fixed-pointD (lambda (x)
+                  (average x (/ (log 1000) (log x))))
+                2.0))
+
+(define (ex1-36-noaverage)
+    (define (average a b)
+      (/ (+ a b) 2.0))
+  (fixed-pointD (lambda (x)
+                  (/ (log 1000) (log x)))
+                2.0))
+
+;1.37.1
+(define (cont-frac-rec n d k)
+  (define (cont-f-rec i)
+    (if ( = i k)
+        (/ (n i) (d i))
+        (/ (n i) (+ (d i) (cont-f-rec (+ i 1))))))
+  (cont-f-rec 1))
+
+(define (find-phi-rec k)
+  (cont-frac-rec (lambda (x) 1.0)
+                 (lambda (x) 1.0)
+                 k))
+
+;1.37.2
+(define (cont-frac-it n d k)
+  (define (cont-f-it i res)
+    (if (= i 1)
+        res
+        (cont-f-it (- i 1) ( / (n (- i 1)) (+ (d (- i 1)) res)))))
+  (cont-f-it k (/ (n k) (d k))))
+
+(define (find-phi-it k)
+  (cont-frac-it (lambda (x) 1.0)
+                 (lambda (x) 1.0)
+                 k))
+;1.38
+(define (e-2 k)
+  (cont-frac-it (lambda (x) 1.0)
+                (lambda (x)
+                  (if (= (remainder (+ x 1) 3) 0)
+                      (* 2 (/ (+ x 1) 3))
+                      1))
+                k))
