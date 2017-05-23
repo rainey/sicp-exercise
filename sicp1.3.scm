@@ -6,6 +6,7 @@
       0
       (+ a (sum-integers (+ a 1) b))))
 
+(define (square a) (* a a))
 (define (cube a ) (* a a a ))
 
 (define (sum-cubes a b)
@@ -268,9 +269,130 @@
                       1))
                 k))
 
-
+;1.39
 (define (tan-cf x k)
   (exact->inexact
    (cont-frac-it (lambda (k) (if (= k 1) x (* x x -1)))
                  (lambda (k) (+ 1 (* 2 (- k 1))))
                  k)))
+
+;Section 1.3.4
+(define (average-damp f)
+  (define (average a b)
+    (/ (+ a b) 2))
+  (lambda (x)
+    (average x (f x))))
+
+(define (sqrt-ad x)
+  (fixed-point
+   (average-damp (lambda (y) (/ x y)))
+   1.0))
+
+(define (curt-ad x)
+  (fixed-point
+   (average-damp (lambda (y) (/ x (* y y))))
+   1.0))
+
+;Returns a function which approximates Derivative of g(x), or Dg(x) at x
+(define (deriv g)
+  (lambda (x)
+    (/ (- (g (+ x dx)) (g x))
+       dx)))
+
+(define dx 0.000001)
+
+;Newton's method:
+;If g ( x ) is a differentiable function, then a solution
+;of the equation g(x) = 0 is a
+;fixed point of the function f(x) where
+;f(x) = x − (g(x)/Dg(x))
+
+;Gives us f(x) relative to given g
+(define (newton-transform g)
+  (lambda (x)
+    (- x (/ (g x)
+            ((deriv g) x)))))
+
+(define (newtons-method g guess)
+  (fixed-point (newton-transform g)
+               guess))
+
+(define (sqrt-nm x)
+  (newtons-method (lambda (y)
+                    (- (* y y) x))
+                  1.0))
+
+(define (curt-nm x)
+  (newtons-method (lambda (y)
+                    (- (* y y y) x))
+                  1.0))
+;Ex. 1.40
+(define (cubic a b c)
+  (lambda (x) (+ (* x x x) (* a x x) (* b x) c)))
+
+;Ex 1.41
+(define (double g)
+  (lambda (x) (g (g x))))
+
+;Ex 1.42
+(define (compose f g)
+  (lambda (x) (f (g x))))
+
+;Ex 1.43
+(define (repeated f n)
+  (if (= n 1)
+      f
+      (compose f (repeated f (- n 1)))))
+
+;Ex. 1.44
+(define (smooth f)
+  (lambda (x) (/ (+ (f x) (f (+ dx x)) (f (- x dx))) 3.0)))
+
+;Ex. 1.45
+;n-smooth or n-folded smooth implementation
+;Had some trouble with this one.
+;Partly because there were no sample outputs
+; Explanation: Returns a function which takes one argument, as needed by the lambda in smooth
+; The function returned should be, when called as ((n-smooth f n) x)
+;       ((smooth (smooth (smooth (smooth f)))) x) ;For n=4
+;Example:
+;> ((smooth (smooth (smooth square))) 2)
+;4.000000000002001
+;> ((n-smooth square 3) 2)
+;4.000000000002001
+(define (n-smooth f n)
+   ((repeated smooth n) f))
+
+;Ext 1.46
+(define (iterative-improve guess-good? f-improve)
+  (define (iterate guess)
+    (if (guess-good? guess)
+        guess
+        (iterate (f-improve guess))))
+  iterate)
+
+(define (sqrt-ii x)
+  (exact->inexact ((iterative-improve (lambda (y)
+                                        (< (abs (- (* y y) x)) 0.00001 ))
+                                      (lambda (y)
+                                        (/ (+ y (/ x y)) 2)))
+                   x)))
+
+
+(define tolerance .00000001)
+
+(define (fixed-point-ii f first-guess)
+  (define (close-enough 
+  ((iterative-improve 
+
+;(define (fixed-point f first-guess)
+;  (define (close-enough? v1 v2)
+;    (< (abs (- v1 v2))
+;       tolerance))
+;  (define (try guess)
+;    (let ((next (f guess)))
+;      (if (close-enough? guess next)
+;          next
+;          (try next))))
+;  (try first-guess))
+ 

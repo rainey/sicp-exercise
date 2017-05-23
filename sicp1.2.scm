@@ -141,10 +141,11 @@
           (else
            (+ a1 (fast-*rec a1 (- b1 1))))))
 
+  ;Ex 1.18
   ;Similar to fast-exp, parameters advance as:
   ; next(n) = n if b1 is even, n+a1 otherwise
   ; next(a1) = double(a1)
-  ; next(b1) = halve(b1), where halve is truncated to integer
+  ; next(b1) = halve(b1), where halve is truncated to integer (eg (halve 5) -> 2) 
   (define (fast-*-it n a1 b1)
     (cond ((= b1 1) (+ n a1))
           ((or (= a1 0) (= b1 0)) 0)
@@ -155,3 +156,18 @@
 
  ;We could further optimize by always using the greater value as a1
  (fast-*-it 0 a b))
+
+;;Fermat's Little Theorem
+(define (even? x) (remainder x 2))
+(define (square x) (* x x))
+(define (halve x) (truncate (/ x 2)))
+(define (expmod base exp m)
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (remainder
+          (square (expmod base (halve  exp) m))
+          m))
+        (else
+         (remainder
+          (* base (expmod base (- exp 1) m))
+          m))))
