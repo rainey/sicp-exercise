@@ -40,14 +40,16 @@
 ;Ex. 2.1;  Signed make-rat
 (define (make-rat num den)
   (let ((g (gcd (abs num) (abs den)))
-        (sign (* (/ num (* num -1)) (/ den (* den -1)) -1)))
+        (sign (/ (* num den) (abs (* num den)))))
     (cons (* sign (abs (/ num g)))
           (* (/ (abs den) g)))))
 
 (display "make-rat test:")
 (newline)
-(make-rat -1 5)
-(make-rat 1 -5)
+(make-rat 2 6)
+(make-rat -2 6)
+(make-rat 2 -6)
+(make-rat -2 -6)
 
 ;Exercise 2.2
 (define (make-point x y)
@@ -107,7 +109,7 @@
 ;Ex 2.3 Part 2
 ;Make a len,width rectangle from segment
 ;Translate segment mid-point to 0,0 and 2*x1, 2*y1
-;Not sure if this is exactly what the exercise meant.
+;Not sure if this is exactly what the exercise meant, but I'm a bit bored
 ;We are still representing the rectangle only with w,h
 ;But constructing differently
 (define (translate-seg-mid seg new-mid)
@@ -133,6 +135,98 @@
     (cons (* 2 (abs (x-point (start-segment translated))))
           (* 2 (abs (y-point (start-segment translated)))))))
 
-(rect-area (make-rectangle-from-seg (make-segment (make-point -1 -1) (make-point -12.0 -12.0))))
+(rect-area (make-rectangle-from-seg
+            (make-segment (make-point -1 -1)
+                          (make-point -12.0 -12.0))))
 
+;Ex 2.4.1: Verification of car, cons implementations
+(define (cons1 x y) 
+  (lambda (m) (m x y)))
 
+(define (car1 z) 
+  (z (lambda (p q) p)))
+
+(car1 (cons1 1 2))
+;First Substitution:
+; l1: cons lambda       l2: inner car lambda 
+((lambda (m) ( m 1 2))
+ (lambda (p q) p))
+
+;Second Substitution (m<-l2)
+((lambda (p q)
+   p) 1 2)
+;1,2 may be replaced by any 'a','b', and the above lambda will yield 'a'
+
+;Ex 2.4.2
+(define (cdr1 z)
+  (z (lambda (p q) q)))
+
+(cdr1 (cons1 1 2))
+
+;2.5: cons/car/cdr of natural numbers using only
+;the exponential formula (2^a)*(3^b) for (cons a b)
+(define (cons-int a b)
+  (* (expt 2 a) (expt 3 b)))
+
+(define (log2 n)
+    (/ (log n) (log 2)))
+(define (log3 n)
+    (/ (log n) (log 3)))
+
+(define (reduce base n)
+  (if (= (remainder n base) 0)
+      (reduce base (/ n base))
+      n))
+
+(define (car-int i)
+  (log2 (reduce 3 i)))
+
+(define (cdr-int i)
+  (log3 (reduce 2 i)))
+
+(car-int (cons-int 4 6))
+(cdr-int (cons-int 4 6))
+
+;Exercise 2.6: Church numerals
+(define zero (lambda (q) (lambda (y) y)))
+
+(define (add-1 n)
+  (lambda (f) (lambda (x) (f ((n f) x)))))
+;Not completed
+
+;Section 2.1.4 Extended exercise
+(define (add-interval x y)
+  (make-interval (+ (lower-bound x) 
+                    (lower-bound y))
+                 (+ (upper-bound x) 
+                    (upper-bound y))))
+
+(define (mul-interval x y)
+  (let ((p1 (* (lower-bound x) 
+               (lower-bound y)))
+        (p2 (* (lower-bound x) 
+               (upper-bound y)))
+        (p3 (* (upper-bound x) 
+               (lower-bound y)))
+        (p4 (* (upper-bound x) 
+               (upper-bound y))))
+    (make-interval (min p1 p2 p3 p4)
+                   (max p1 p2 p3 p4))))
+
+(define (div-interval x y)
+  (mul-interval x 
+                (make-interval 
+                 (/ 1.0 (upper-bound y)) 
+                 (/ 1.0 (lower-bound y)))))
+
+(define (make-interval a b) (cons a b))
+
+;Ex. 2.7:
+(define (upper-bound interval)
+  (cdr interval))
+(define (lower-bound interval)
+  (car interval))
+
+(define (sub-interval x y)
+  (make-interval (- (lower-bound x) (lower-bound y))
+                 (- (upper-bound x) (upper-bound y))))
