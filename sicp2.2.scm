@@ -98,3 +98,86 @@
 
 (same-parity 1 2 3 79 33 22 43)
 (same-parity 2 3 4 5 6 7)
+
+;Mapping over lists
+(define (map proc items)
+  (if (null? items)
+      nil
+      (cons (proc (car items))
+            (map proc (cdr items)))))
+
+;Ex 2.21
+(define (square-list items)
+  (if (null? items)
+      nil
+      (cons (* (car items) (car items)) (square-list (cdr items)))))
+
+(define (square-list2 items)
+  (map (lambda (x) (* x x)) items))
+
+(square-list '(1 2 3 4 5))
+(square-list2 '(1 2 3 4 5))
+
+;Ex 2.22:  I did not know about 'begin' before writing this
+(define (for-each fn items)
+  (if (null? items)
+      true
+      (begin
+        (fn (car items))
+        (for-each fn (cdr items)))))
+
+(define (for-each2 fn items)
+  (cond ((null? items)
+         (true))
+        (else
+         (fn (car items))
+         (for-each fn (cdr items)))))
+
+(for-each 
+ (lambda (x) (newline) (display x))
+ (list 57 321 88))
+
+(for-each2
+ (lambda (x) (newline) (display x))
+ (list 57 321 88))
+
+(define (count-leaves x)
+  (cond ((null? x) 0)
+        ((not (pair? x)) 1)
+        (else (+ (count-leaves (car x))
+                 (count-leaves (cdr x))))))
+
+;Ex 2.24
+
+;Ex 2.25: Gets tricky.
+(define ex2251 (list 1 3 (list 5 7) 9))
+;ex2251
+(cadr (caddr ex2251))
+(define ex2252 (list (list 7)))
+;ex2252
+(car (car ex2252))
+(define ex2253 (list 1 (list 2 (list 3 (list 4 (list 5 (list 6 7)))))))
+;ex2253
+(cadr (cadr (cadr (cadr (cadr (cadr ex2253))))))
+
+;2.27 Deep-Reverse:
+;I'm fairly sure this works as intended, but not sure if
+;the reversed lists are valid, as it seems lists are
+;meant to be null terminated, and this will return pairs
+;that begin with null, and terminate with a value
+(define (deep-reverse listp)
+  (cond ((or (not (pair? listp)) (null? listp)) listp)
+        ;((null? (cdr listp)) (cons (car listp) nil))
+        (else
+         (cons (deep-reverse (cdr listp)) (deep-reverse (car listp))))))
+
+;2.28 Fringe: Recurse tree in prefix order
+;(define (fringe listp))
+
+
+;2.29
+(define (make-mobile left right)
+  (list left right))
+
+(define (make-branch length structure)
+  (list length structure))
