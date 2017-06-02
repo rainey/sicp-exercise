@@ -1,16 +1,21 @@
 #lang sicp
 
+;Note: Temporarily switched to Racket R5RS as the interpreter
+;displays lists/trees a bit more clearly
+
+(define nil '())
+
 ;Givens:
-(define (list-ref items n)
+(define (list-ref1 items n)
   (if (= n 0)
       (car items)
-      (list-ref (cdr items) 
+      (list-ref1 (cdr items) 
                 (- n 1))))
 
-(define (length items)
+(define (length1 items)
   (if (null? items)
       0
-      (+ 1 (length (cdr items)))))
+      (+ 1 (length1 (cdr items)))))
 
 ;Exercise 2.17: Define a procedure last-pair that returns
 ;the list that contains only the last element of a given (nonempty)
@@ -27,10 +32,10 @@
 ;Exercise 2.18 Define a procedure reverse that takes a list as
 ;argument and returns a list of the same elements in reverse
 ;order: 
-(define (reverse list1)
+(define (reverse1 list1)
   (if (null? list1)
       list1
-      (cons (reverse (cdr list1)) (car list1))))
+      (cons (reverse1 (cdr list1)) (car list1))))
 
 ;Exercise 2.19
 ;Consider the change-counting program of 1.2.2.
@@ -100,11 +105,11 @@
 (same-parity 2 3 4 5 6 7)
 
 ;Mapping over lists
-(define (map proc items)
+(define (map1 proc items)
   (if (null? items)
       nil
       (cons (proc (car items))
-            (map proc (cdr items)))))
+            (map1 proc (cdr items)))))
 
 ;Ex 2.21
 (define (square-list items)
@@ -119,21 +124,21 @@
 (square-list2 '(1 2 3 4 5))
 
 ;Ex 2.22:  I did not know about 'begin' before writing this
-(define (for-each fn items)
+(define (for-each1 fn items)
   (if (null? items)
-      true
+      items
       (begin
         (fn (car items))
-        (for-each fn (cdr items)))))
+        (for-each1 fn (cdr items)))))
 
 (define (for-each2 fn items)
   (cond ((null? items)
          (true))
         (else
          (fn (car items))
-         (for-each fn (cdr items)))))
+         (for-each1 fn (cdr items)))))
 
-(for-each 
+(for-each1 
  (lambda (x) (newline) (display x))
  (list 57 321 88))
 
@@ -148,8 +153,9 @@
                  (count-leaves (cdr x))))))
 
 ;Ex 2.24
+;(done in a notebook)
 
-;Ex 2.25: Gets tricky.
+;Ex 2.25: Select the cell containing '7' - Gets tricky.
 (define ex2251 (list 1 3 (list 5 7) 9))
 ;ex2251
 (cadr (caddr ex2251))
@@ -171,13 +177,163 @@
         (else
          (cons (deep-reverse (cdr listp)) (deep-reverse (car listp))))))
 
-;2.28 Fringe: Recurse tree in prefix order
-;(define (fringe listp))
+(define rlist (deep-reverse (list (list 1 2 3) (list (list 10 11) 5 (list 12 13)) (list 7 8 9))))
 
+;2.28 Fringe: Recurse and flatten a tree in prefix order 
+;First Try:  This does in fact recurse in the correct order, but does not flatten the tree
+(define (fringe-bad listp)
+  (define (fringe-left listp)
+    (cond ((not (pair? (car listp))) (newline) (display (car listp)) (car listp))
+          (else
+           (cons (fringe-left (car listp))
+                   (fringe-right (car listp))))))
+  (define (fringe-right listp)
+    (cond ((not (pair? (cdr listp))) (newline) (display (cdr listp)) (cdr listp))
+          (else
+           (cons (fringe-left (cdr listp))
+                   (fringe-right (cdr listp))))))
+  (cons (fringe-left listp) (fringe-right listp)))
 
-;2.29
+;Taken from scheme wiki
+(define (fringe listp)
+  (cond ((null? listp) listp)
+        ((not (pair? listp)) (list listp))
+        (else
+         (append (fringe (car listp)) (fringe (cdr listp))))))
+  
+
+(fringe-bad (list (list 1 (list 5 6) 2) (list 3 4)))
+(fringe (list (list 1 (list 5 6) 2) (list 3 4)))
+                      
+;2.29 - I made a mistake in my initial branch-weight function which
+; caused me some grief, and this took me a few sessions to work through.
+; I'm also not watching the lectures along with the book, so the
+; mutual recursion threw me off a bit at first.
 (define (make-mobile left right)
   (list left right))
 
 (define (make-branch length structure)
   (list length structure))
+
+(define test-mobile
+  (make-mobile
+   (make-branch 1
+                (make-mobile (make-branch 2 3) (make-branch 4 5)))
+   (make-branch 3 14)))
+
+(define test-mobile-long ;0
+  (cons     ;1<-0   ;@1, from 0
+   (cons 1  ;2<-1
+    (cons   ;3<-2
+     (cons  ;4<-3
+      (cons  2;5<-4
+       (cons 3;6<-5
+        '()
+        )    ;5<-6   ;@level 5, closed 6
+       )     ;4<-5
+      (cons ;5.1<-4
+       (cons 4;6.1<-5.1
+        (cons 5;7.1<-6.1
+         '()
+         )   ;6.1<-7.1
+        )    ;5.1<-6.1
+       '()
+       )     ;4<-5.1
+      )      ;3<-4
+     '()
+     )       ;2<-3
+    )        ;1<-2
+   (cons    ;2.2<-1
+    (cons 3 ;3.2<-2.1
+     (cons 14  ;4.2<-3.2
+      '()
+      )      ;3.2<-4.2
+     )       ;2.2<-3.2
+    '()
+    )        ;2.2<-1
+   )         ;0<-1
+  )          ;00
+
+;2.29.1 Selectors
+(define (left-branch mobile)
+  (car mobile))
+
+(left-branch test-mobile)
+
+(define (right-branch mobile)
+  (cdr mobile))
+
+(right-branch test-mobile)
+
+(define (branch-length branch)
+  (if (null? (cdr branch)) 
+      (caar branch)
+      (car branch)))
+
+(newline)
+(display "Branch-length, right branch: ")
+(branch-length (right-branch test-mobile))
+
+(newline)
+(display "Branch-length, right branch: ")
+(branch-length (left-branch test-mobile))
+
+
+(define (branch-structure branch)
+  (if (null? (cdr branch))
+      (cadar branch)
+      (cadr branch)))
+
+(newline)
+(display "Branch-structure, right branch: ")
+(branch-structure (right-branch test-mobile))
+
+(newline)
+(display "Branch-structure, left branch: ")
+(branch-structure (left-branch test-mobile))
+
+;2.29.2
+(define (has-mobile branch)
+  (pair? (branch-structure branch)))
+
+(define (branch-weight branch)
+    (if (not (has-mobile branch))
+        (branch-structure branch)
+        (total-weight (branch-structure branch))))
+
+(define (total-weight mobile)
+  (+ (branch-weight (left-branch mobile)) (branch-weight (right-branch mobile))))
+
+;2.29.3
+(define (balanced? mobile)
+  (let ((left-torque (* (branch-length (left-branch mobile)) (branch-weight (left-branch mobile))))
+        (right-torque (* (branch-length (right-branch mobile)) (branch-weight (right-branch mobile))))
+        (left-mobile? (has-mobile (left-branch mobile)))
+        (right-mobile? (has-mobile (right-branch mobile))))
+    (and
+     (= right-torque left-torque)
+     (if left-mobile?
+         (balanced? (branch-structure (left-branch mobile)))
+         #t)
+     (if right-mobile?
+         (balanced? (branch-structure (right-branch mobile)))
+         #t))))
+     
+
+(define test-mobile-balanced
+  (make-mobile
+   (make-branch 2
+                (make-mobile (make-branch 2 10) (make-branch 4 5)))
+   (make-branch 6 5)))
+  
+
+(total-weight test-mobile)
+(balanced? test-mobile)
+(balanced? test-mobile-balanced)
+(balanced? (make-mobile (make-branch 2 test-mobile-balanced) (make-branch 2 test-mobile-balanced)))
+
+;2.29.4
+;I'm not going to actually implement the cons'd mobiles
+;Theoretically the selectors and supporting functions which use car/cdr-type
+;functions would need to be rewritten.  As well the supporting functions which
+;use null?/pair? to determine the contentd of a branch
