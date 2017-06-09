@@ -336,4 +336,79 @@
 ;I'm not going to actually implement the cons'd mobiles
 ;Theoretically the selectors and supporting functions which use car/cdr-type
 ;functions would need to be rewritten.  As well the supporting functions which
-;use null?/pair? to determine the contentd of a branch
+;use null?/pair? to determine the contents of a branch would need to be rewritten
+
+;2.30.1: square-tree, direct
+(define (square-tree-d in)
+  (cond ((not (pair? in)) (* in in))
+        ((not (pair? (cdr in)))
+         (square-tree-d (car in)))
+        ((not (pair? (car in)))
+         (list (* (car in) (car in)) (square-tree-d (cdr in))))
+        (else
+         (list (square-tree-d (car in)) (square-tree-d (cdr in))))))
+
+(square-tree-d test-mobile)
+
+;2.30.2: square tree using map
+(define (square-tree-m in)
+  (map (lambda (sub)
+         (if (pair? sub)
+             (square-tree-m sub)
+             (* sub sub))) in))
+
+(square-tree-m test-mobile)
+
+;2.31
+(define (tree-map fn tree)
+  (map (lambda (sub)
+         (if (pair? sub)
+             (tree-map fn sub)
+             (fn sub)))
+       tree))
+
+(tree-map (lambda (x) (* x x)) test-mobile)
+
+;2.32
+(define (subsets s)
+  (if (null? s)
+      (list nil)
+      (let ((rest (subsets (cdr s))))
+        (append rest (map (lambda (x) (cons (car s) x)) rest)))))
+
+(subsets (list 1 2 3))
+
+;Section 2.2.3 givens
+(define (filter1 predicate sequence)
+  (cond ((null? sequence) nil)
+        ((predicate (car sequence))
+         (cons (car sequence)
+               (filter1 predicate 
+                       (cdr sequence))))
+        (else  (filter1 predicate 
+                       (cdr sequence)))))
+
+(define (accumulate1 op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+          (accumulate1 op 
+                      initial 
+                      (cdr sequence)))))
+
+(define (enumerate-interval low high)
+  (if (> low high)
+      nil
+      (cons low 
+            (enumerate-interval 
+             (+ low 1) 
+             high))))
+
+(define (enumerate-tree tree)
+  (cond ((null? tree) nil)
+        ((not (pair? tree)) (list tree))
+        (else (append 
+               (enumerate-tree (car tree))
+               (enumerate-tree (cdr tree))))))
+
+
