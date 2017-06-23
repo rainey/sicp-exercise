@@ -411,4 +411,27 @@
                (enumerate-tree (car tree))
                (enumerate-tree (cdr tree))))))
 
+;2.33.1
+;Naming the lambda params really helps here.
+;current_item is the item that map_a is running the procedure with.
+;computed_rest is the remainder of the sequence
+(define (map_a p seq)
+  (accumulate1
+   (lambda (current_item computed_rest)
+     (cons (p current_item) computed_rest))
+   nil seq))
 
+;2.33.2
+(define (append_a seq1 seq2)
+  (accumulate1 cons seq2 seq1))
+
+;Test, these should be the same:
+(append (list 1 2 3) (list 4 5 6))
+(append_a (list 1 2 3) (list 4 5 6))
+
+;2.33.3
+(define (length_a sequence)
+  (accumulate1 (lambda (x y) (+ 1 y)) 0 sequence))
+
+
+;2.34
