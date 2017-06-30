@@ -1,5 +1,4 @@
-#lang sicp
-
+#lang racket
 ;Note: Temporarily switched to Racket R5RS as the interpreter
 ;displays lists/trees a bit more clearly
 
@@ -412,6 +411,7 @@
                (enumerate-tree (cdr tree))))))
 
 ;2.33.1
+;Had to think quite a bit about this one for some reason...
 ;Naming the lambda params really helps here.
 ;current_item is the item that map_a is running the procedure with.
 ;computed_rest is the remainder of the sequence
@@ -420,6 +420,9 @@
    (lambda (current_item computed_rest)
      (cons (p current_item) computed_rest))
    nil seq))
+
+(map (lambda (x) (* x x)) (list 3 4 5 6))
+(map_a (lambda (x) (* x x)) (list 3 4 5 6))
 
 ;2.33.2
 (define (append_a seq1 seq2)
@@ -433,5 +436,80 @@
 (define (length_a sequence)
   (accumulate1 (lambda (x y) (+ 1 y)) 0 sequence))
 
+(length (list 1 2 3 4))
+(length_a (list 1 2 3 4))
 
 ;2.34
+(define (horner-eval x coefficient-sequence)
+  (accumulate1
+   (lambda (this-coeff higher-terms)
+     (+ this-coeff (* x higher-terms)))
+   0 coefficient-sequence))
+
+(horner-eval 2 (list 1 3 0 5 0 1))
+
+;2.35
+;(define (count-leaves_a t)
+; (accumulate (lambda (x y) ) 0 )
+
+;2.36
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      nil
+      (cons (accumulate1 op init (map car seqs))
+            (accumulate-n op init (map cdr seqs)))))
+
+(define s (list (list 1 2 3) (list 4 5 6) (list 7 8 9) (list 10 11 12)))
+
+(accumulate-n + 0 s)
+
+(define (dot-product v w)
+  (accumulate1 + 0 (map * v w)))
+
+;Easier than expected, with some thought.
+;2.37
+(define (matrix-*-vector m v)
+  (map (lambda (x) (dot-product x v)) m))
+
+(define test-mat (list (list 1 2 3) (list 4 5 6) (list 7 8 9)))
+
+(matrix-*-vector test-mat (list 2 2 2))
+
+;2.37.2
+(define (transpose mat)
+  (accumulate-n cons nil mat))
+
+(transpose test-mat)
+
+;2.37.3
+(define  (matrix-*-matrix m n)
+  (let ((cols (transpose n)))
+    (map (lambda (x) (matrix-*-vector cols x)) m)))
+
+(matrix-*-matrix test-mat test-mat)
+
+;2.38
+
+(define fold-right accumulate1)
+(define (fold-left op initial sequence)
+  (define (iter result rest)
+    (if (null? rest)
+        result
+        (iter (op result (car rest))
+              (cdr rest))))
+  (iter initial sequence))
+
+;2.39.1
+;I don't think this is quite right
+(define (reverse2 sequence)
+  (fold-right
+   (lambda ( x y) (cons y x)) nil sequence))
+
+;2.39.2
+(define (reverse3 sequence)
+  (fold-left
+   (lambda (x y) (cons y x)) nil sequence))
+
+(reverse2 (list 1 2 3 4))
+(reverse3 (list 1 2 3 4))
+
